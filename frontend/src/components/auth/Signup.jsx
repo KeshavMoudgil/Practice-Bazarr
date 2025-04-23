@@ -12,32 +12,42 @@ const Signup = () => {
   const userTypeRef = useRef();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessages([]);
-    fetch("http://localhost:5173/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        firstName: firstNameRef.current.value,
-        lastName: lastNameRef.current.value,
-        email: emailRef.current.value,
-        password: passwordRef.current.value,
-        confirmPassword: confirmPasswordRef.current.value,
-        userType: userTypeRef.current.value,
-      }),
-    })
-    .then(res => {
-      if (res.status === 201) {
+    try {
+      const response = await fetch("http://localhost:5173/api/auth/signup", {
+        method: "POST", // Changed from GET to POST since this is creating a new user
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: firstNameRef.current.value,
+          lastName: lastNameRef.current.value,
+          email: emailRef.current.value,
+          password: passwordRef.current.value,
+          confirmPassword: confirmPasswordRef.current.value,
+          userType: userTypeRef.current.value,
+        }),
+      });
+
+      const data = await response.json(); // Removed duplicate JSON body here
+      
+      if (response.status === 201) {
         navigate("/login");
-      } else {
-        return res.json();
+        return;
       }
-    })
-    .then(({errorMessages}) => setErrorMessages(errorMessages))
-    .catch(error => setErrorMessages([error.message]));
+
+      if (data.errorMessages) {
+        setErrorMessages(data.errorMessages);
+      } else {
+        setErrorMessages(['An unexpected error occurred. Please try again.']);
+      }
+
+    } catch (error) {
+      console.log('Signup error:', error);
+      setErrorMessages(['An error occurred during signup. Please try again.']);
+    }
   }
 
   return (
